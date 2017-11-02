@@ -96,10 +96,10 @@ void ADXL345::readFrom(byte address, int num, byte _buff[]) {
 /*      Start; Send Register Address; Send Value To Write; End      */
 void ADXL345::writeToI2C(byte _address, byte _val) {
 	Wire.beginTransmission(ADXL345_DEVICE); 
-	//Wire.send(_address);             
-	//Wire.send(_val);                 
-	Wire.write(_address);             
-	Wire.write(_val);                 
+	Wire.send(_address);             
+	Wire.send(_val);                 
+	//Wire.write(_address);             
+	//Wire.write(_val);                 
 	Wire.endTransmission();         
 }
 
@@ -107,25 +107,25 @@ void ADXL345::writeToI2C(byte _address, byte _val) {
 /*                Start; Send Address To Read; End                  */
 void ADXL345::readFromI2C(byte address, int num, byte _buff[]) {
 	Wire.beginTransmission(ADXL345_DEVICE);  
-	//Wire.send(address);             
-	Wire.write(address);             
+	Wire.send(address);             
+	//Wire.write(address);             
 	Wire.endTransmission();         
 	
-	Wire.beginTransmission(ADXL345_DEVICE); 
+	//Wire.beginTransmission(ADXL345_DEVICE); 
 	Wire.requestFrom(ADXL345_DEVICE, num);  // Request 6 Bytes
 	//  digitalWrite(1, HIGH);
 	int i = 0;
 	while(Wire.available())					
 	{ 
-		//_buff[i] = Wire.receive();				// Receive Byte
-		_buff[i] = Wire.read();				// Receive Byte
+		_buff[i] = Wire.receive();				// Receive Byte
+		//_buff[i] = Wire.read();				// Receive Byte
 		i++;
 	}
 	if(i != num){
 		status = ADXL345_ERROR;
 		error_code = ADXL345_READ_ERROR;
 	}
-	Wire.endTransmission();         	
+	//Wire.endTransmission();         	
 }
 
 
