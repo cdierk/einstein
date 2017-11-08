@@ -13,9 +13,15 @@
 
 #include <TinyADXL345.h>         // SparkFun ADXL345 Library
 #include <EEPROM.h>              // EEPROM memory library
+#include  "Wire.h"               // Wire library for ATTiny
 
+//EEPROM variables
 int currentState = 0;            //will be replaced by call to EEPROM (if value is available)
 byte data;                       //used when writing to EEPROM
+
+//i2c variables (to NFC chip)
+const byte NTAG_ADDR = 0x55;
+const byte int_reg_addr = 0x01;   //0x01 -- first block of user memory 
 
 /*********** COMMUNICATION SELECTION ***********/
 /*    Comment Out The One You Are Not Using    */
@@ -30,6 +36,9 @@ ADXL345 adxl = ADXL345();             // USE FOR I2C COMMUNICATION
 /******************** SETUP ********************/
 /*          Configure ADXL345 Settings         */
 void setup(){
+
+  //i2c to NFC tag
+  Wire.begin();
   
   pinMode(CLEAR_PIN, OUTPUT);
   pinMode(TOP_DOT, OUTPUT);
@@ -179,6 +188,49 @@ void count(){
   //write value to EEPROM
   data = (0xff & currentState);
   EEPROM.write(0, (byte) data);     //save current state
+
+  //write value to NTAG over i2c
+  //rewrite values
+  int writeableState = currentState + 48;
+  
+  byte a = 0x03;
+  //corresponds to length of data that you are sending; 08:1 byte, 09:2 bytes, 0A: 3 bytes, etc, etc
+  byte b = 0x08;
+  byte c = 0xD1;
+  byte d = 0x01;
+  //corresponds to length of data that you are sending; 04:1 byte, 05:2 bytes, 06: 3 bytes, etc, etc
+  byte e = 0x04;
+  byte f = 0x54;
+  byte g = 0x02;
+  byte h = 0x65;
+  byte i = 0x6E;
+  byte j = writeableState;
+  byte k = '2';
+  byte l = '3';
+  byte m = '4';
+  byte n = '5';
+  byte o = 0xFE;
+  byte p = 0x00;
+  
+  Wire.beginTransmission(NTAG_ADDR); 
+  Wire.send(int_reg_addr);  
+  Wire.send(a);           
+  Wire.send(b); 
+  Wire.send(c);           
+  Wire.send(d);     
+  Wire.send(e);           
+  Wire.send(f);     
+  Wire.send(g);           
+  Wire.send(h);
+  Wire.send(i);           
+  Wire.send(j); 
+  Wire.send(k);           
+  Wire.send(l);     
+  Wire.send(m);           
+  Wire.send(n);     
+  Wire.send(o);           
+  Wire.send(p);                                    
+  Wire.endTransmission();  
 
   //clear display to update the dots
   clearDisplay();
