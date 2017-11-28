@@ -128,7 +128,7 @@ while(1):
 				clipb.copy(content)
 				keyboard.press_and_release('ctrl+v')
 				serBuff =""
-			break
+			#break
 
 			
 			
