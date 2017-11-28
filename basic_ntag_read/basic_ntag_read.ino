@@ -121,7 +121,7 @@ void loop(void) {
       // NTAG 215       135     4             129
       // NTAG 216       231     4             225      
 
-      for (uint8_t i = 0; i < 42; i++) 
+      for (uint8_t i = 0; i < 226; i++) 
       {
         //reads the tag and puts the data in the data variable; does this one page at a time
         success = nfc.ntag2xx_ReadPage(i, data);
