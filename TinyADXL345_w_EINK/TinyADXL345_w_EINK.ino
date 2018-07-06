@@ -23,6 +23,8 @@ byte data;                       //used when writing to EEPROM
 const byte NTAG_ADDR = 0x55;
 const byte int_reg_addr = 0x01;   //0x01 -- first block of user memory 
 
+unsigned long timeNow;
+
 /*********** COMMUNICATION SELECTION ***********/
 /*    Comment Out The One You Are Not Using    */
 //ADXL345 adxl = ADXL345(10);           // USE FOR SPI COMMUNICATION, ADXL345(CS_PIN);
@@ -39,6 +41,8 @@ void setup(){
 
   //i2c to NFC tag
   Wire.begin();
+
+  timeNow = millis();
   
   pinMode(CLEAR_PIN, OUTPUT);
   pinMode(TOP_DOT, OUTPUT);
@@ -67,9 +71,9 @@ void setup(){
   adxl.setTapDetectionOnXYZ(0, 0, 1); // Detect taps in the directions turned ON "adxl.setTapDetectionOnX(X, Y, Z);" (1 == ON, 0 == OFF)
  
   // Set values for what is considered a TAP and what is a DOUBLE TAP (0-255)
-  adxl.setTapThreshold(50);           // 62.5 mg per increment
+  adxl.setTapThreshold(175);           // 62.5 mg per increment
   adxl.setTapDuration(15);            // 625 μs per increment
-  adxl.setDoubleTapLatency(80);       // 1.25 ms per increment
+  adxl.setDoubleTapLatency(90);       // 1.25 ms per increment
   adxl.setDoubleTapWindow(200);       // 1.25 ms per increment
  
   // Set values for what is considered FREE FALL (0-255)
@@ -149,7 +153,7 @@ void ADXL_ISR() {
   }
   
   // Tap Detection
-  if(adxl.triggered(interrupts, ADXL345_SINGLE_TAP)){
+  else if(adxl.triggered(interrupts, ADXL345_SINGLE_TAP)){
     //Serial.println("*** TAP ***");
      //add code here to do when a tap is sensed
      count();
@@ -200,15 +204,17 @@ void count(){
   byte d = 0x01;
   //corresponds to length of data that you are sending; 04:1 byte, 05:2 bytes, 06: 3 bytes, etc, etc
   byte e = 0x04;
+  //specifies type as text
   byte f = 0x54;
+  //.en 
   byte g = 0x02;
   byte h = 0x65;
   byte i = 0x6E;
   byte j = writeableState;
-  byte k = '2';
-  byte l = '3';
-  byte m = '4';
-  byte n = '5';
+  byte k = 0xFE;
+  byte l = 0xFE;
+  byte m = 0xFE;
+  byte n = 0xFE;
   byte o = 0xFE;
   byte p = 0x00;
   

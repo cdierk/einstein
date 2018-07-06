@@ -17,33 +17,34 @@
 
 //EEPROM variables
 int currentState = 0;            //will be replaced by call to EEPROM (if value is available)
+int nailPointer = 0;            //will be replaced by call to EEPROM (if value is available)
 byte data;                       //used when writing to EEPROM
 
 //i2c variables (to NFC chip)
 const byte NTAG_ADDR = 0x55;
-const byte int_reg_addr = 0x01;   //first block of memory 
-
-boolean slavePresent = false;
-
-  //must read or write in chunks of 16 blocks
-  byte a;
-  byte b;
-  byte c;
-  byte d;
-  byte e;
-  byte f;
-  byte g;
-  byte h;
-  byte i;
-  byte pointer = 0x02;
-  byte numData = 0x05;
-  byte mostRecent = 0x04;
-  byte m;
-  byte n;
-  byte o;
-  byte p;
-
-  unsigned long timeNow;
+const byte int_reg_addr = 0x37;   //second to last block of memory 
+//
+//boolean slavePresent = false;
+//
+//  //must read or write in chunks of 16 blocks
+//  byte a;
+//  byte b;
+//  byte c;
+//  byte d;
+//  byte e;
+//  byte f;
+//  byte g;
+//  byte h;
+//  byte i;
+//  byte pointer = 0x32;
+//  byte numData = 0x35;
+//  byte mostRecent = 0x34;
+//  byte m;
+//  byte n;
+//  byte o;
+//  byte p;
+//
+//  unsigned long timeNow;
 
 /*********** COMMUNICATION SELECTION ***********/
 /*    Comment Out The One You Are Not Using    */
@@ -62,13 +63,14 @@ void setup(){
   //i2c to NFC tag
   Wire.begin();
 
-  timeNow = millis();
+  //timeNow = millis();
   
   pinMode(CLEAR_PIN, OUTPUT);
   pinMode(TOP_DOT, OUTPUT);
   pinMode(BOTTOM_DOT, OUTPUT);
 
   currentState = EEPROM.read(0);
+  nailPointer = EEPROM.read(1);
 
   adxl.powerOn();                     // Power on the ADXL345
 
@@ -124,36 +126,35 @@ void loop(){
   // You may also choose to avoid using interrupts and simply run the functions within ADXL_ISR(); 
   //  and place it within the loop instead.  
   // This may come in handy when it doesn't matter when the action occurs. 
-
-  //read current metadata values from NTAG over i2c
-  //only check every 500 ms
-  if (millis() - timeNow >= 500) {
-      if (!slavePresent) {                                      // determine if slave joined the I2C bus
-          Wire.beginTransmission(NTAG_ADDR);                    // begin call to slave
-          Wire.send(0x01);
-          if (Wire.endTransmission() == 0) slavePresent = true;  // if responds - mark slave as present
-      } else {       // slave found on I2C bus
-          delay(1);
-          Wire.requestFrom(NTAG_ADDR,16);                        //request 16 bytes from slave
-          a = Wire.receive();                               //received byte from slave
-          b = Wire.receive();                               //received byte from slave
-          c = Wire.receive();                               //received byte from slave
-          d = Wire.receive();                               //received byte from slave
-          e = Wire.receive();                               //received byte from slave
-          f = Wire.receive();                               //received byte from slave
-          g = Wire.receive();                               //received byte from slave
-          h = Wire.receive();                               //received byte from slave
-          i = Wire.receive();                               //received byte from slave
-          pointer = Wire.receive();                               //received byte from slave
-          numData = Wire.receive();                               //received byte from slave
-          mostRecent = Wire.receive();                               //received byte from slave
-          m = Wire.receive();                               //received byte from slave
-          n = Wire.receive();                               //received byte from slave
-          o = Wire.receive();                               //received byte from slave
-          p = Wire.receive();                               //received byte from slave
-    }
-    timeNow = millis();
-  }
+//
+//  //read current metadata values from NTAG over i2c
+//  //only check every 500 ms
+//  if (millis() - timeNow >= 500) {
+//      if (!slavePresent) {                                      // determine if slave joined the I2C bus
+//          Wire.beginTransmission(NTAG_ADDR);                    // begin call to slave
+//          Wire.send(0x01);
+//          if (Wire.endTransmission() == 0) slavePresent = true;  // if responds - mark slave as present
+//      } else {       // slave found on I2C bus
+//          Wire.requestFrom(NTAG_ADDR,16);                        //request 16 bytes from slave
+//          a = Wire.receive();                               //received byte from slave
+//          b = Wire.receive();                               //received byte from slave
+//          c = Wire.receive();                               //received byte from slave
+//          d = Wire.receive();                               //received byte from slave
+//          e = Wire.receive();                               //received byte from slave
+//          f = Wire.receive();                               //received byte from slave
+//          g = Wire.receive();                               //received byte from slave
+//          h = Wire.receive();                               //received byte from slave
+//          i = Wire.receive();                               //received byte from slave
+//          pointer = Wire.receive();                               //received byte from slave
+//          numData = Wire.receive();                               //received byte from slave
+//          mostRecent = Wire.receive();                               //received byte from slave
+//          m = Wire.receive();                               //received byte from slave
+//          n = Wire.receive();                               //received byte from slave
+//          o = Wire.receive();                               //received byte from slave
+//          p = Wire.receive();                               //received byte from slave
+//    }
+//    timeNow = millis();
+//  }
 }
 
 /********************* ISR *********************/
@@ -206,13 +207,13 @@ void clearDisplay()
 
 void count(){
   currentState++;
-  //pointer++;
+  nailPointer++;
 
   if(currentState > 3){
     currentState = 0;
   }
-  if(pointer >= numData){
-    //pointer = 0;
+  if(nailPointer >= 20){
+    nailPointer = 0;
   }
   
   if (currentState == 0){
@@ -230,9 +231,12 @@ void count(){
     digitalWrite(BOTTOM_DOT, HIGH);
   }
 
-  //write value to EEPROM
+  //write values to EEPROM
   data = (0xff & currentState);
   EEPROM.write(0, (byte) data);     //save current state
+
+  data = (0xff & nailPointer);
+  EEPROM.write(1, (byte) data);     //save nail pointer
 
   //write value to NTAG over i2c
   //rewrite values
@@ -243,7 +247,7 @@ void count(){
 
   // write to NTAG over i2c
   Wire.beginTransmission(NTAG_ADDR); 
-  Wire.send(0x04);                  //memory block to write to
+  Wire.send(int_reg_addr);                  //memory block to write to
 //  Wire.send(0x03);           
 //  Wire.send(0x0A); 
 //  Wire.send(0xD1);           
@@ -253,22 +257,22 @@ void count(){
 //  Wire.send(0x02);           
 //  Wire.send(0x65);
 //  Wire.send(0x6E);     
-  Wire.send(a);   
-  Wire.send(b);   
-  Wire.send(c);   
-  Wire.send(d);   
-  Wire.send(e);   
-  Wire.send(f);   
-  Wire.send(g);   
-  Wire.send(h);   
-  Wire.send(i);     
-  Wire.send(pointer); 
-  Wire.send(numData);           
-  Wire.send(mostRecent);     
-  Wire.send(0xFE);           
-  Wire.send(0xFE);     
-  Wire.send(0xFE);           
-  Wire.send(0xFE);                                    
+  Wire.send(nailPointer);   
+  Wire.send(0x00);   
+  Wire.send(0x00);   
+  Wire.send(0x00);   
+  Wire.send(0x00);   
+  Wire.send(0x00);   
+  Wire.send(0x00);   
+  Wire.send(0x00);   
+  Wire.send(0x00);     
+  Wire.send(0x00); 
+  Wire.send(0x00);           
+  Wire.send(0x00);     
+  Wire.send(0x00);           
+  Wire.send(0x00);     
+  Wire.send(0x00);           
+  Wire.send(0x00);                                    
   Wire.endTransmission();  
 
   delay(REFRESH_DELAY);
