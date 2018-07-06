@@ -208,7 +208,7 @@ void loop() {
           Serial.print("Writing URI as NDEF Record ... ");
 
           // THIS IS WHERE YOU SET THE URL/email/phone #
-          char * url = "etsy.com";
+          char * url = "ebay.com";
           uint8_t ndefprefix = NDEF_URIPREFIX_HTTP_WWWDOT;         //0x01
 
           //actually write the URLs
@@ -227,6 +227,13 @@ void loop() {
           data[3] = 0xFE;
 
           nfc.ntag2xx_WritePage(225, data);
+
+          data[0] = 0x00;
+          data[1] = 0x00;
+          data[2] = 0x00;
+          data[3] = 0x00;
+
+          nfc.ntag2xx_WritePage(220, data);
           
           if (success)
           {
